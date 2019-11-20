@@ -1,5 +1,7 @@
 package rest.addressbook.domain;
 
+import java.util.Objects;
+
 /**
  * A phone number
  */
@@ -22,6 +24,27 @@ public class PhoneNumber {
 
   public void setType(PhoneType type) {
     this.type = type;
+  }
+
+  @Override
+  public boolean equals(Object obj){
+    if (obj == this){
+      return true;
+    }
+    if(obj == null){
+      return false;
+    }
+    if(this.getClass() != obj.getClass()){
+      return false;
+    }
+
+    PhoneNumber phone_n = (PhoneNumber) obj;
+    return Objects.equals(number, phone_n.number) && Objects.equals(type, phone_n.type);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(number, type);
   }
 
 }

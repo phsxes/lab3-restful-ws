@@ -20,6 +20,7 @@ import rest.addressbook.domain.AddressBook;
 import rest.addressbook.domain.Person;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * A simple test suite.
@@ -42,6 +43,9 @@ public class AddressBookServiceTest {
 		AddressBook ab = new AddressBook();
 		launchServer(ab);
 
+		//Creating a copy of the addressbook to verify safety after the GET /contacts call
+		AddressBook ab_copy = new AddressBook(ab);
+
 		// Request the address book
 		Client client = ClientBuilder.newClient();
 		Response response = client.target("http://localhost:8282/contacts")
@@ -54,6 +58,14 @@ public class AddressBookServiceTest {
 		// Verify that GET /contacts is well implemented by the service, i.e
 		// complete the test to ensure that it is safe and idempotent
 		//////////////////////////////////////////////////////////////////////
+
+		//Verifying that GET /contacts is safe
+		assertEquals(ab, ab_copy);
+
+		//Verifying that GET /contacts is idempotent by calling it again
+		response = client.target("http://localhost:8282/contacts")
+				.request().get();
+		assertEquals(ab, ab_copy);
 	}
 
 	@Test
@@ -61,6 +73,9 @@ public class AddressBookServiceTest {
 		// Prepare server
 		AddressBook ab = new AddressBook();
 		launchServer(ab);
+
+		//Creating a copy of the addressbook to verify safety after the POST /contacts call
+		AddressBook ab_copy = new AddressBook(ab);
 
 		// Prepare data
 		Person juan = new Person();
@@ -94,8 +109,20 @@ public class AddressBookServiceTest {
 		//////////////////////////////////////////////////////////////////////
 		// Verify that POST /contacts is well implemented by the service, i.e
 		// complete the test to ensure that it is not safe and not idempotent
-		//////////////////////////////////////////////////////////////////////	
-				
+		//////////////////////////////////////////////////////////////////////
+
+		//Verifying that POST /contacts isn't safe
+		assertNotEquals(ab, ab_copy);
+
+		//Updating the copy of addressbook to verify idempotency
+		ab_copy = new AddressBook(ab);
+		
+		//Verifying that POST /contacts isn't idempotent by calling it again
+		response = client.target("http://localhost:8282/contacts")
+				.request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity(juan, MediaType.APPLICATION_JSON));
+		assertNotEquals(ab, ab_copy);
+
 	}
 
 	@Test
@@ -136,6 +163,9 @@ public class AddressBookServiceTest {
 		assertEquals(3, mariaUpdated.getId());
 		assertEquals(mariaURI, mariaUpdated.getHref());
 
+		//Creating a copy of the addressbook to verify safety after the GET /contacts/person/3 call
+		AddressBook ab_copy = new AddressBook(ab);
+
 		// Check that the new user exists
 		response = client.target("http://localhost:8282/contacts/person/3")
 				.request(MediaType.APPLICATION_JSON).get();
@@ -149,8 +179,15 @@ public class AddressBookServiceTest {
 		//////////////////////////////////////////////////////////////////////
 		// Verify that GET /contacts/person/3 is well implemented by the service, i.e
 		// complete the test to ensure that it is safe and idempotent
-		//////////////////////////////////////////////////////////////////////	
-	
+		//////////////////////////////////////////////////////////////////////
+
+		//Verifying that GET /contacts/person/3 is safe
+		assertEquals(ab, ab_copy);
+
+		//Verifying that GET /contacts/person/3 is idempotent by calling it again
+		response = client.target("http://localhost:8282/contacts/person/3")
+				.request(MediaType.APPLICATION_JSON).get();
+		assertEquals(ab, ab_copy);
 	}
 
 	@Test
@@ -165,6 +202,9 @@ public class AddressBookServiceTest {
 		ab.getPersonList().add(salvador);
 		ab.getPersonList().add(juan);
 		launchServer(ab);
+
+		//Creating a copy of the addressbook to verify safety after the GET /contacts call
+		AddressBook ab_copy = new AddressBook(ab);
 
 		// Test list of contacts
 		Client client = ClientBuilder.newClient();
@@ -181,8 +221,16 @@ public class AddressBookServiceTest {
 		//////////////////////////////////////////////////////////////////////
 		// Verify that GET /contacts is well implemented by the service, i.e
 		// complete the test to ensure that it is safe and idempotent
-		//////////////////////////////////////////////////////////////////////	
-	
+		//////////////////////////////////////////////////////////////////////
+
+		//Verifying that GET /contacts is safe
+		assertEquals(ab, ab_copy);
+
+		//Verifying that GET /contacts is idempotent by calling it again
+		response = client.target("http://localhost:8282/contacts")
+				.request(MediaType.APPLICATION_JSON).get();
+		assertEquals(ab, ab_copy);
+
 	}
 
 	@Test
@@ -199,6 +247,9 @@ public class AddressBookServiceTest {
 		ab.getPersonList().add(salvador);
 		ab.getPersonList().add(juan);
 		launchServer(ab);
+
+		//Creating a copy of the addressbook to verify safety after the PUT/contacts/person/2 call
+		AddressBook ab_copy = new AddressBook(ab);
 
 		// Update Maria
 		Person maria = new Person();
@@ -234,8 +285,20 @@ public class AddressBookServiceTest {
 		//////////////////////////////////////////////////////////////////////
 		// Verify that PUT /contacts/person/2 is well implemented by the service, i.e
 		// complete the test to ensure that it is idempotent but not safe
-		//////////////////////////////////////////////////////////////////////	
-	
+		//////////////////////////////////////////////////////////////////////
+
+		//Verifying that PUT /contacts/person/2 is not safe
+		assertNotEquals(ab, ab_copy);
+
+		//Updating the copy of addressbook to verify idempotency
+		ab_copy = new AddressBook(ab);
+
+		//Verifying that PUT /contacts/person/2 is idempotent by calling it again
+		response = client
+				.target("http://localhost:8282/contacts/person/2")
+				.request(MediaType.APPLICATION_JSON)
+				.put(Entity.entity(maria, MediaType.APPLICATION_JSON));
+		assertEquals(ab, ab_copy);
 	}
 
 	@Test
@@ -252,6 +315,9 @@ public class AddressBookServiceTest {
 		ab.getPersonList().add(juan);
 		launchServer(ab);
 
+		//Creating a copy of the addressbook to verify that DELETE /contacts/person/2 is not safe
+		AddressBook ab_copy = new AddressBook(ab);
+
 		// Delete a user
 		Client client = ClientBuilder.newClient();
 		Response response = client
@@ -267,7 +333,19 @@ public class AddressBookServiceTest {
 		//////////////////////////////////////////////////////////////////////
 		// Verify that DELETE /contacts/person/2 is well implemented by the service, i.e
 		// complete the test to ensure that it is idempotent but not safe
-		//////////////////////////////////////////////////////////////////////	
+		//////////////////////////////////////////////////////////////////////
+
+		//Verifying that DELETE /contacts/person/2 is not safe
+		assertNotEquals(ab, ab_copy);
+
+		//Updating the copy of addressbook to verify idempotency
+		ab_copy = new AddressBook(ab);
+
+		//Verifying that DELETE /contacts/person/2 is idempotent by calling it again
+		response = client
+				.target("http://localhost:8282/contacts/person/2").request()
+				.delete();
+		assertEquals(ab, ab_copy);
 
 	}
 
